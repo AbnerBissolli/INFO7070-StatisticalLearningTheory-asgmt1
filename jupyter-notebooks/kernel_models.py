@@ -40,6 +40,42 @@ class KernelKNN:
             
             # K(distance / h)
             u = k_distances / self.h
+            
+            weights = self.kernel(u)
+            
+            if np.sum(weights) > 0:
+                pred = np.sum(weights * k_labels) / np.sum(weights)
+            else:
+                pred = np.mean(k_labels)
+            
+            predictions.append(pred)
+        return np.array(predictions)
+
+class KernelKNNAdaptative:
+    def __init__(self, k=5, kernel=None):
+        self.k = k
+        self.kernel = kernel
+   
+    def fit(self, X, y):
+        self.X_train = np.array(X)
+        self.y_train = np.array(y)
+        return self
+        
+    def predict(self, X):
+        predictions = []
+        for x in X:
+            distances = np.linalg.norm(self.X_train - x, axis=1)
+            idx = np.argsort(distances)[:self.k]
+            k_distances = distances[idx]
+            k_labels = self.y_train[idx]
+            
+            #  Divide by max distance, instead of h
+            dmax = np.max(k_distances)
+            if dmax == 0:
+                u = np.zeros_like(k_distances)
+            else:
+                u = k_distances / dmax
+            
             weights = self.kernel(u)
             
             if np.sum(weights) > 0:
